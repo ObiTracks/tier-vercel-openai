@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { Metadata } from "next";
 
 import { siteConfig } from "@/config/site";
-import { dm_sans, inter } from "@/lib/fonts";
+import { dm_sans, inter, poppins } from "@/lib/fonts";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${dm_sans.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${poppins.variable} ${inter.variable} ${dm_sans.variable}`} suppressHydrationWarning>
       <head />
       {/* Body */}
       <body className="bg-slate-1 font-sans text-slate-12">
