@@ -63,4 +63,5 @@
   .caption-s-semibold {
     @apply font-sans text-[12px] font-semibold leading-[16px] tracking-[0%];
   }
+  
 }
