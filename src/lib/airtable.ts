@@ -1,11 +1,12 @@
 import { env } from "@/env.mjs";
 import Airtable from "airtable";
+
 var base = new Airtable({ apiKey: env.NEXT_PUBLIC_AIRTABLE_API_KEY }).base('appGTJJ1EDkWFEok5');
 
 export function updateCount(recordString: string, operation: 'increment' | 'decrement'): Promise<number> {
     return new Promise((resolve, reject) => {
         base('Popular Usecases').select({
-            filterByFormula: `{Usecase} = '${recordString}'`,
+            filterByFormula: `{Usecase} = '${recordString.toLowerCase()}'`,
         }).firstPage((err: any, records: any) => {
             if (err) {
                 if (err.statusCode === 429) {
@@ -59,7 +60,7 @@ export async function createRecord(recordString: string, initialVotes: number = 
         const records = await base('Popular Usecases').create([{
             fields: {
                 Votes: initialVotes,
-                Usecase: recordString,
+                Usecase: recordString.toLowerCase(),
             },
         }]);
 
@@ -83,7 +84,7 @@ export async function createRecord(recordString: string, initialVotes: number = 
 export function searchRecord(recordString: any): Promise<any> {
     return new Promise((resolve, reject) => {
         base('Popular Usecases').select({
-            filterByFormula: `FIND('${recordString}', {Usecase})`,
+            filterByFormula: `FIND('${recordString}', LOWER({Usecase}))`,
         }).firstPage(function (err: any, records: any) {
             if (err) {
                 console.error(err);
@@ -107,12 +108,20 @@ export async function searchAndCreateUsecase(recordString: string): Promise<any>
 
         // If similar record(s) found, don't create a new one
         if (records.length > 0) {
-            console.log(`Record(s) already exist with the same or similar Usecase: ${recordString}`);
-            return null;
+            console.log(`Record(s) already exist with the same or similar Usecase: ${recordString}`);            
+            const record = records[0];
+            const useCase: UseCase = {
+                id: record.getId(),
+                useCaseText: record.get('Usecase'),
+                votes: record.get('Votes'),
+            };;
+            console.log("Discovered usecase ", useCase)
+            return useCase;
         }
 
         // If no similar records are found, create a new one
         const newUsecase = await createRecord(recordString);
+        console.log("New usecase created ", newUsecase)
         return newUsecase;
 
     } catch (error) {

@@ -3,6 +3,7 @@
 import { useState, useEffect, useReducer, useRef } from "react";
 import * as airtable from "@/lib/airtable";
 import ConfettiGenerator from "confetti-js";
+import _ from 'lodash';
 
 
 export function EmailNotify() {
@@ -121,43 +122,158 @@ interface InputChipProps {
   onSubmit: (inputValue: string) => void;
 }
 
+// export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Element {
+//   const [inputValue, setInputValue] = useState<string>('');
+//   const maxCharLimit = 255;
+
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setInputValue(e.target.value);
+//   };
+
+//   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+//     if (e.key === 'Enter') {
+//       handleSubmit();
+//     }
+//   };
+
+//   const handleSubmit = async () => {
+//     onSubmit(inputValue);
+//     setInputValue('');
+//   };
+
+//   return (
+//     <div className={`overflow-hidden align-middle select-none border border-gray-600 transition-all ease-in-out duration-300 border-dashed rounded-md flex items-center pr-[3px] md:min-w-[400px]`}>
+//       <input
+//         type="text"
+//         maxLength={maxCharLimit}
+//         placeholder="How do you see yourself using AI on your codebase?"
+//         value={inputValue}
+//         onChange={handleInputChange}
+//         onKeyPress={handleKeyPress}
+//         className="text-xs text-grey-800 font-light px-2 py-1 flex-grow bg-transparent border-none outline-none appearance-none focus:ring-0 relative"
+//       />
+//       <button onClick={handleSubmit} className="transition-all ease-in-out duration-300 hover:bg-blue text-xs bg-gray-700 text-white py-[1px] px-2 rounded-md h-[90%]">
+//         ↵
+//       </button>
+//     </div>
+//   );
+// }
+
 export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Element {
   const [inputValue, setInputValue] = useState<string>('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const maxCharLimit = 255;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLUListElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const fetchSuggestions = async (value: string) => {
+    try {
+      const fetchedRecords = await airtable.searchRecord(value);
+      let fetchedSuggestions = fetchedRecords.map((record: any) => record.get('Usecase'));
+
+      // Sort suggestions based on the index of the input value in each suggestion
+      fetchedSuggestions = fetchedSuggestions.sort((a, b) => {
+        const indexA = a.toLowerCase().indexOf(value.toLowerCase());
+        const indexB = b.toLowerCase().indexOf(value.toLowerCase());
+
+        if (indexA === -1) return 1; // a does not contain value, so place it at the end
+        if (indexB === -1) return -1; // b does not contain value, so place it at the beginning
+
+        return indexA - indexB; // Sort by the index of value in the suggestion
+      }).slice(0, 3); // Take the top 3 suggestions
+
+      setSuggestions(fetchedSuggestions);
+    } catch (err) {
+      console.error('Error fetching suggestions', err);
+    }
+  };
+
+
+  const debouncedFetchSuggestions = _.debounce(fetchSuggestions, 300);
+
+  useEffect(() => {
+    if (inputValue) {
+      debouncedFetchSuggestions(inputValue);
+    } else {
+      setSuggestions([]);
+    }
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      debouncedFetchSuggestions.cancel();
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [inputValue]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Tab' && suggestions) {
+      e.preventDefault(); // Prevents moving to the next focusable element
+      setInputValue(suggestions[0]);
+      setSuggestions([]); // Close the suggestion box
+    }
+
     if (e.key === 'Enter') {
       handleSubmit();
     }
   };
 
   const handleSubmit = async () => {
+    console.log(inputValue)
     onSubmit(inputValue);
     setInputValue('');
   };
 
+  const dropdownStyle = {
+    top: inputRef.current ? inputRef.current.offsetHeight + 'px' : '100%',
+    bottom: 'auto'
+  };
+
   return (
-    <div className={`overflow-hidden align-middle select-none border border-gray-600 transition-all ease-in-out duration-300 border-dashed rounded-md flex items-center pr-[3px] md:min-w-[400px]`}>
+    <div ref={containerRef} className={`relative align-middle select-none border border-gray-600 transition-all ease-in-out duration-300 border-dashed rounded-md flex items-center pr-[3px] md:min-w-[400px]`}>
       <input
+        ref={inputRef}
         type="text"
         maxLength={maxCharLimit}
         placeholder="How do you see yourself using AI on your codebase?"
         value={inputValue}
         onChange={handleInputChange}
-        onKeyPress={handleKeyPress}
+        onKeyDown={handleKeyPress}
         className="text-xs text-grey-800 font-light px-2 py-1 flex-grow bg-transparent border-none outline-none appearance-none focus:ring-0 relative"
       />
       <button onClick={handleSubmit} className="transition-all ease-in-out duration-300 hover:bg-blue text-xs bg-gray-700 text-white py-[1px] px-2 rounded-md h-[90%]">
         ↵
       </button>
+      {suggestions.length > 0 && (
+        <ul ref={dropdownRef} className="suggestions-dropdown absolute flex flex-col z-10 w-full gap-1 rounded-md overflow-auto border border-gray-600 border-dashed bg-gray-800" style={dropdownStyle}>
+          {suggestions.map((suggestion, index) => (
+            <li
+              key={index}
+              className="cursor-pointer px-2 py-1 text-xs text-grey-800 font-light flex items-center justify-between bg-grey"
+              onClick={() => {
+                setInputValue(suggestion)
+                setSuggestions([]) // Hide suggestions once one is clicked
+              }}
+            >
+              {suggestion}
+              {index === 0 && <div className="ml-2 text-xs text-gray-600 rounded px-1">tab</div>}
+            </li>
+          ))}
+        </ul>
+      )}
+
     </div>
   );
 }
-
 
 interface UseCase {
   id: string;
@@ -182,14 +298,14 @@ const initialState: InitialState = {
   isLoading: true,
 };
 
-function reducer(state: InitialState, action: { type: string; payload: any }): InitialState {
+function reducer(state: InitialState, action: { type: string; payload: any; callback?: () => any }): InitialState {
   switch (action.type) {
-    case 'ADD_SELECTION':
     case 'ADD_SELECTION': {
       const existingSelectedUseCases = JSON.parse(localStorage.getItem('selectedUseCases') || '{}');
       const newSelectedUseCases = { ...existingSelectedUseCases, [action.payload]: true };
       localStorage.setItem('selectedUseCases', JSON.stringify(newSelectedUseCases));
       console.log(newSelectedUseCases)
+
       return { ...state, selectedUseCases: newSelectedUseCases, clicks: state.clicks + 1, selections: state.selections + 1 };
     }
     case 'REMOVE_SELECTION':
@@ -234,6 +350,10 @@ export function UseCaseList(): JSX.Element {
     fetchTopUseCases();
   }, []);
 
+  useEffect(() => {
+    console.log("Remounting since useCases changed")
+  }, [useCases])
+
   const handleSelectionChange = (useCaseText: string, isSelected: boolean) => {
     if (clicks < 10) {
       if (isSelected && state.selections >= 3) return;
@@ -243,27 +363,46 @@ export function UseCaseList(): JSX.Element {
   };
 
   const handleUsecaseSubmit = async (inputValue: string) => {
-    if (!inputValue) {
-      console.log("Please enter a value");
+    if (!inputValue) return;
+
+    const normalizedInputValue = inputValue.toLowerCase().trim();
+
+    const existingUseCase = useCases.find(
+      (useCase) => useCase.useCaseText.toLowerCase().trim() === normalizedInputValue
+    );
+
+    if (existingUseCase) {
+      dispatch({ type: 'ADD_SELECTION', payload: existingUseCase.useCaseText });
+      setUseCases((prevUseCases) => {
+        const updatedUseCases = prevUseCases.map(useCase =>
+          useCase.id === existingUseCase.id
+            ? { ...useCase, votes: useCase.votes + 1 }
+            : useCase
+        );
+        localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
+        return updatedUseCases;
+      });
       return;
     }
 
     try {
-      const useCase: UseCase = await airtable.searchAndCreateUsecase(inputValue);
+      const useCase: UseCase = await airtable.searchAndCreateUsecase(normalizedInputValue);
 
-      console.log('Entry added successfully', useCase);
+      if (!useCase) return;
 
-      dispatch({ type: 'ADD_SELECTION', payload: useCase.useCaseText });
-      console.log(useCases)
-      console.log(useCase)
+      dispatch({ type: 'ADD_SELECTION', payload: useCase.useCaseText, callback: setUseCases });
 
-      setUseCases(prevUseCases => [...prevUseCases, useCase]);
-      localStorage.setItem('useCases', JSON.stringify([...useCases, useCase]));
+      setUseCases((prevUseCases) => {
+        const updatedUseCases = [...prevUseCases, useCase];
+        localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
+        return updatedUseCases;
+      });
 
     } catch (err) {
       console.error("Failed to add your entry", err);
     }
   }
+
 
   return (
     <div ref={body} className={`flex flex-wrap justify-center md:w-[1000px] gap-2 ${clicks > 10 ? "select-none" : " "} `} >
@@ -274,7 +413,7 @@ export function UseCaseList(): JSX.Element {
           <UseCaseChip
             key={useCase.id}
             initialValue={useCase.votes}
-            useCaseText={useCase.useCaseText}
+            useCaseText={useCase.useCaseText.charAt(0).toUpperCase() + useCase.useCaseText.slice(1)}
             isSelected={!!selectedUseCases[useCase.useCaseText]}
             onSelectionChange={(isSelected) => handleSelectionChange(useCase.useCaseText, isSelected)}
             isDisabled={(state.clicks >= 10 && !selectedUseCases[useCase.useCaseText]) || (Object.keys(selectedUseCases).length >= 3 && !selectedUseCases[useCase.useCaseText])}
