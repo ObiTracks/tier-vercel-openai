@@ -173,7 +173,7 @@ export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Elem
       let fetchedSuggestions = fetchedRecords.map((record: any) => record.get('Usecase'));
 
       // Sort suggestions based on the index of the input value in each suggestion
-      fetchedSuggestions = fetchedSuggestions.sort((a, b) => {
+      fetchedSuggestions = fetchedSuggestions.sort((a: any, b: any) => {
         const indexA = a.toLowerCase().indexOf(value.toLowerCase());
         const indexB = b.toLowerCase().indexOf(value.toLowerCase());
 
@@ -190,7 +190,7 @@ export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Elem
   };
 
 
-  const debouncedFetchSuggestions = _.debounce(fetchSuggestions, 300);
+  const debouncedFetchSuggestions = _.debounce(fetchSuggestions, 400);
 
   useEffect(() => {
     if (inputValue) {
@@ -228,7 +228,7 @@ export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Elem
   };
 
   const handleSubmit = async () => {
-    console.log(inputValue)
+    console.log("Input Value: ", inputValue)
     onSubmit(inputValue);
     setInputValue('');
   };
@@ -350,10 +350,6 @@ export function UseCaseList(): JSX.Element {
     fetchTopUseCases();
   }, []);
 
-  useEffect(() => {
-    console.log("Remounting since useCases changed")
-  }, [useCases])
-
   const handleSelectionChange = (useCaseText: string, isSelected: boolean) => {
     if (clicks < 10) {
       if (isSelected && state.selections >= 3) return;
@@ -363,49 +359,55 @@ export function UseCaseList(): JSX.Element {
   };
 
   const handleUsecaseSubmit = async (inputValue: string) => {
-    if (!inputValue) return;
-
-    const normalizedInputValue = inputValue.toLowerCase().trim();
-
-    const existingUseCase = useCases.find(
-      (useCase) => useCase.useCaseText.toLowerCase().trim() === normalizedInputValue
+    const trimmedInputValue = inputValue.trim();
+  
+    if (!trimmedInputValue) return;
+  
+    // Attempt to check if the use case already exists in the list
+    const existingUsecase = useCases.find(
+      (useCase) => useCase.useCaseText.toLowerCase().trim() === trimmedInputValue
     );
-
-    if (existingUseCase) {
-      dispatch({ type: 'ADD_SELECTION', payload: existingUseCase.useCaseText });
-      setUseCases((prevUseCases) => {
-        const updatedUseCases = prevUseCases.map(useCase =>
-          useCase.id === existingUseCase.id
-            ? { ...useCase, votes: useCase.votes + 1 }
-            : useCase
-        );
-        localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
-        return updatedUseCases;
-      });
-      return;
-    }
-
+  
     try {
-      const useCase: UseCase = await airtable.searchAndCreateUsecase(normalizedInputValue);
-
-      if (!useCase) return;
-
-      dispatch({ type: 'ADD_SELECTION', payload: useCase.useCaseText, callback: setUseCases });
-
-      setUseCases((prevUseCases) => {
-        const updatedUseCases = [...prevUseCases, useCase];
-        localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
-        return updatedUseCases;
-      });
-
-    } catch (err) {
-      console.error("Failed to add your entry", err);
+      if (existingUsecase) {
+        console.log("Usecase found in list: ", existingUsecase);
+        dispatch({ type: 'ADD_SELECTION', payload: existingUsecase.useCaseText });
+  
+        setUseCases((prevUseCases) => {
+          const updatedUseCases = prevUseCases.map(useCase =>
+            useCase.id === existingUsecase.id
+              ? { ...useCase, votes: useCase.votes + 1 }
+              : useCase
+          );
+  
+          localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
+          return updatedUseCases;
+        });
+  
+      } else {
+        console.log("Usecase not found in list, searching and creating/upserting: ", existingUsecase);
+  
+        const newUsecase: UseCase = await airtable.searchAndCreateUsecase(trimmedInputValue);
+  
+        if (!newUsecase) throw new Error("Failed to create use case");
+  
+        dispatch({ type: 'ADD_SELECTION', payload: newUsecase.useCaseText });
+  
+        setUseCases((prevUseCases) => {
+          const updatedUseCases = [...prevUseCases, newUsecase];
+          localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
+          return updatedUseCases;
+        });
+      }
+    } catch (error) {
+      console.error('Error processing use case', error);
     }
-  }
-
+  };
+  
 
   return (
     <div ref={body} className={`flex flex-wrap justify-center md:w-[1000px] gap-2 ${clicks > 10 ? "select-none" : " "} `} >
+      <h1>{JSON.stringify(inputValue)}</h1>
       {isLoading ? (
         <div className="w-full h-10 bg-blue animate-pulse rounded-md"></div>
       ) : (

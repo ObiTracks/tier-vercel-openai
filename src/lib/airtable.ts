@@ -93,42 +93,51 @@ export function searchRecord(recordString: any): Promise<any> {
             }
 
             const foundRecords = records.map((record: any) => {
-                console.log(`Found record with ID ${record.getId()} and Usecase ${record.get('Usecase')}`);
                 return record;
             });
+
+            if (foundRecords) {
+                console.log(`Found ${foundRecords.length} records that are match or are partial matches with "${recordString}":`, foundRecords);
+            }
 
             resolve(foundRecords);
         });
     });
 }
 
-export async function searchAndCreateUsecase(recordString: string): Promise<any> {
+export async function searchAndCreateUsecase(recordString: string): Promise<UseCase> {
     try {
         const records = await searchRecord(recordString);
 
-        // If similar record(s) found, don't create a new one
         if (records.length > 0) {
-            console.log(`Record(s) already exist with the same or similar Usecase: ${recordString}`);            
             const record = records[0];
-            const useCase: UseCase = {
-                id: record.getId(),
-                useCaseText: record.get('Usecase'),
-                votes: record.get('Votes'),
-            };;
-            console.log("Discovered usecase ", useCase)
-            return useCase;
+            const existingUsecaseText = record.get('Usecase');
+            
+            // Checking for exact match
+            if (existingUsecaseText.toLowerCase() === recordString.toLowerCase()) {
+                console.log(`Exact match found for Usecase: ${recordString}`);
+                
+                // Increment the vote count for the existing record if exact match is found
+                await updateCount(recordString, 'increment');
+                
+                return {
+                    id: record.getId(),
+                    useCaseText: existingUsecaseText,
+                    votes: (record.get('Votes') || 0) + 1, // Return the incremented vote count
+                };
+            }
         }
 
-        // If no similar records are found, create a new one
-        const newUsecase = await createRecord(recordString);
-        console.log("New usecase created ", newUsecase)
-        return newUsecase;
+        // If no exact match is found, create a new record
+        console.log(`No exact match found. Creating a new record for Usecase: ${recordString}`);
+        return await createRecord(recordString);
 
     } catch (error) {
         console.error('Error in searchAndCreateUsecase:', error);
         throw error;
     }
 }
+
 
 
 export function getTopPopularUsecases(n: number): Promise<any[]> {
@@ -161,23 +170,22 @@ export async function addEmailToAirtable(email: string): Promise<void> {
 
 async function exponentialBackoff<T>(fn: () => Promise<T>, maxRetries = 5): Promise<T> {
     let retries = 0;
-    
+
     async function attempt(): Promise<T> {
-      try {
-        return await fn();
-      } catch (err: any) {
-        if (err.statusCode === 429 && retries < maxRetries) {
-          retries += 1;
-          const delay = Math.pow(2, retries) * 100;
-          console.log(`Retrying in ${delay} ms...`);
-          await new Promise(res => setTimeout(res, delay));
-          return attempt();
-        } else {
-          throw err;
+        try {
+            return await fn();
+        } catch (err: any) {
+            if (err.statusCode === 429 && retries < maxRetries) {
+                retries += 1;
+                const delay = Math.pow(2, retries) * 100;
+                console.log(`Retrying in ${delay} ms...`);
+                await new Promise(res => setTimeout(res, delay));
+                return attempt();
+            } else {
+                throw err;
+            }
         }
-      }
     }
-  
+
     return attempt();
-  }
-  
+}
