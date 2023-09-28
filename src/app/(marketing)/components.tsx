@@ -1,42 +1,79 @@
 'use client'
 
-import { useState, useEffect, useReducer } from "react";
-import * as voting from "@/lib/airtable";
+import { useState, useEffect, useReducer, useRef } from "react";
+import * as airtable from "@/lib/airtable";
+import ConfettiGenerator from "confetti-js";
 
 
-interface EmailNotifyProps { }
-
-export function EmailNotify(props: EmailNotifyProps) {
+export function EmailNotify() {
   const [email, setEmail] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isValidEmail, setIsValidEmail] = useState(true); // to track if email is valid
+  const canvasRef = useRef(null);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: any) => {
+    e.preventDefault(); // prevent the default form submission
+
+    if (!validateEmail(email)) { // Validate email when form is submitted
+      setIsValidEmail(false); // Set the isValidEmail to false if email is invalid
+      return;
+    }
+
     try {
-      // assuming that you will send email to your API
-      const response = await fetch('YOUR_API_ENDPOINT', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      console.log('Email submitted successfully');
+      await airtable.addEmailToAirtable(email);
+      setIsValidEmail(true);
+      setShowSuccess(true);
     } catch (error) {
-      console.error('There was a problem with the fetch operation:', error);
+      console.error('There was a problem with the Airtable operation:', error);
     }
   }
 
+  const validateEmail = (email: string) => {
+    // A simple regex for email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  const handleEmailChange = (e: any) => {
+    setEmail(e.target.value);
+    // setIsValidEmail(validateEmail(e.target.value));
+  }
+
+  useEffect(() => {
+    if (showSuccess) {
+      const confettiSettings = { target: canvasRef.current };
+      const confetti = new ConfettiGenerator(confettiSettings);
+      confetti.render();
+      const timeoutId = setTimeout(() => {
+        confetti.clear();
+      }, 5000);
+      return () => {
+        confetti.clear();
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [showSuccess]);
+
   return (
-    <div className="mt-4 flex border-2 border-blue-500 rounded-md">
-      <input type="email" placeholder="Leave your email" onChange={(e) => setEmail(e.target.value)} className="p-2 rounded-l-md" />
-      <button onClick={handleSubmit} className="px-4 py-2 bg-blue-500 text-white rounded-r-md">↵</button>
+    <div className={`flex flex-col items-center gap-[10px]`}>
+      <h4 className="font-light m-0">Get notified when we launch 🚀</h4>
+      <form onSubmit={handleSubmit} className={`flex overflow-hidden justify-between items-center select-none border ${isValidEmail ? 'border-blue-500' : 'border-red-500'} focus:border-white transition-all ease-in-out duration-300 rounded-md pr-[6px] min-w-[300px] h-12`}>
+        <input
+          type="email"
+          placeholder="Leave us your email"
+          onChange={handleEmailChange}
+          className="p-2 text-sm text-grey-800 font-light flex-grow bg-transparent border-none focus:border-none focus:ring-0 outline-none appearance-none focus:outline-none relative"
+        />
+        <button type="submit" className="transition-all ease-in-out duration-300 hover:bg-blue-700 text-md bg-blue-500 text-white px-3 rounded-md h-[80%] leading-none">
+          ↵
+        </button>
+      </form>
+      {showSuccess && <p className="text-green-500 mt-2">Thanks! We got your email 🎉</p>}
+      <canvas ref={canvasRef} className={`fixed top-0 left-0 z-10 w-full h-full ${showSuccess ? 'visible' : 'invisible'}`} />
     </div>
   );
 }
+
 
 
 interface UseCaseChipProps {
@@ -59,7 +96,7 @@ export function UseCaseChip({ initialValue, useCaseText, isSelected: initialIsSe
       setIsSelected(newSelectionState); // Toggle the selected state
       onSelectionChange(newSelectionState); // Notify parent about the selection change
 
-      const updatedVotes: number = await voting.updateCount(useCaseText, newSelectionState ? "increment" : "decrement");
+      const updatedVotes: number = await airtable.updateCount(useCaseText, newSelectionState ? "increment" : "decrement");
       setVotes(updatedVotes); // Setting the updated vote count.
     } catch (error) {
       console.error('There was an error sending the vote!', error);
@@ -70,8 +107,8 @@ export function UseCaseChip({ initialValue, useCaseText, isSelected: initialIsSe
     <div className={`overflow-hidden select-none transition-all ease-in-out duration-100 cursor-pointer border ${isSelected ? 'border-blue-500' : 'border-gray-600 hover:border-white'} rounded-md flex gap-2`}
       onClick={isDisabled ? undefined : handleVote}
     >
-      <div className={`bg-gray-700 flex items-center gap-1 px-2 py-1 cursor-pointer`}>
-        <span className="font-regular text-sm ">{isSelected ? "★" : "☆"} star</span>
+      <div className={`bg-gray-800 flex items-center gap-1 px-2 py-1 cursor-pointer`}>
+        <span className="font-regular text-xs ">{isSelected ? "★" : "☆"} star</span>
         {votes >= 0 && <span className={`${isSelected ? 'bg-blue' : 'bg-gray-600 '} transition-all px-[0.3rem] text-sm text-center rounded-full`}>{votes}</span>}
       </div>
       <div className="text-xs text-grey-800 font-light px-2 py-1">{useCaseText}</div>
@@ -80,10 +117,11 @@ export function UseCaseChip({ initialValue, useCaseText, isSelected: initialIsSe
 }
 
 interface InputChipProps {
+  uscaseListRef?: any;
   onSubmit: (inputValue: string) => void;
 }
 
-export function InputChip({ onSubmit }: InputChipProps): JSX.Element {
+export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Element {
   const [inputValue, setInputValue] = useState<string>('');
   const maxCharLimit = 255;
 
@@ -97,15 +135,13 @@ export function InputChip({ onSubmit }: InputChipProps): JSX.Element {
     }
   };
 
-  const handleSubmit = () => {
-    if (inputValue) {
-      onSubmit(inputValue);
-      setInputValue('');
-    }
+  const handleSubmit = async () => {
+    onSubmit(inputValue);
+    setInputValue('');
   };
 
   return (
-    <div className={`overflow-hidden align-middle select-none border border-gray-600 hover:border-white transition-all ease-in-out duration-300 border-dashed rounded-md flex items-center pr-[3px] md:min-w-[400px]`}>
+    <div className={`overflow-hidden align-middle select-none border border-gray-600 transition-all ease-in-out duration-300 border-dashed rounded-md flex items-center pr-[3px] md:min-w-[400px]`}>
       <input
         type="text"
         maxLength={maxCharLimit}
@@ -113,7 +149,7 @@ export function InputChip({ onSubmit }: InputChipProps): JSX.Element {
         value={inputValue}
         onChange={handleInputChange}
         onKeyPress={handleKeyPress}
-        className="text-xs text-grey-800 font-light px-2 py-1 flex-grow bg-transparent border-none outline-none appearance-none focus:outline-none relative"
+        className="text-xs text-grey-800 font-light px-2 py-1 flex-grow bg-transparent border-none outline-none appearance-none focus:ring-0 relative"
       />
       <button onClick={handleSubmit} className="transition-all ease-in-out duration-300 hover:bg-blue text-xs bg-gray-700 text-white py-[1px] px-2 rounded-md h-[90%]">
         ↵
@@ -149,9 +185,13 @@ const initialState: InitialState = {
 function reducer(state: InitialState, action: { type: string; payload: any }): InitialState {
   switch (action.type) {
     case 'ADD_SELECTION':
-      const newSelectedUseCases = { ...state.selectedUseCases, [action.payload]: true };
+    case 'ADD_SELECTION': {
+      const existingSelectedUseCases = JSON.parse(localStorage.getItem('selectedUseCases') || '{}');
+      const newSelectedUseCases = { ...existingSelectedUseCases, [action.payload]: true };
       localStorage.setItem('selectedUseCases', JSON.stringify(newSelectedUseCases));
+      console.log(newSelectedUseCases)
       return { ...state, selectedUseCases: newSelectedUseCases, clicks: state.clicks + 1, selections: state.selections + 1 };
+    }
     case 'REMOVE_SELECTION':
       const { [action.payload]: _, ...remaining } = state.selectedUseCases;
       localStorage.setItem('selectedUseCases', JSON.stringify(remaining));
@@ -167,14 +207,16 @@ export function UseCaseList(): JSX.Element {
   const [useCases, setUseCases] = useState<UseCase[]>(JSON.parse(localStorage.getItem('useCases') || '[]'));
   const [state, dispatch] = useReducer(reducer, initialState);
   const { selectedUseCases, clicks, selections, isLoading } = state;
+  const [inputValue, setInputValue] = useState<string>('');
+  const body = useRef<any>(null);
 
   useEffect(() => {
     // localStorage.removeItem('selectedUseCases');
     // localStorage.removeItem('useCases');
     async function fetchTopUseCases() {
       try {
-        // Assume voting.getTopPopularUsecases is previously defined
-        const records = await voting.getTopPopularUsecases(10);
+        // Assume airtable.getTopPopularUsecases is previously defined
+        const records = await airtable.getTopPopularUsecases(20);
         // Assume UseCase is previously defined
         const mappedRecords: UseCase[] = records.map(record => ({
           id: record.getId(),
@@ -200,8 +242,31 @@ export function UseCaseList(): JSX.Element {
     }
   };
 
+  const handleUsecaseSubmit = async (inputValue: string) => {
+    if (!inputValue) {
+      console.log("Please enter a value");
+      return;
+    }
+
+    try {
+      const useCase: UseCase = await airtable.searchAndCreateUsecase(inputValue);
+
+      console.log('Entry added successfully', useCase);
+
+      dispatch({ type: 'ADD_SELECTION', payload: useCase.useCaseText });
+      console.log(useCases)
+      console.log(useCase)
+
+      setUseCases(prevUseCases => [...prevUseCases, useCase]);
+      localStorage.setItem('useCases', JSON.stringify([...useCases, useCase]));
+
+    } catch (err) {
+      console.error("Failed to add your entry", err);
+    }
+  }
+
   return (
-    <div className={`flex flex-wrap justify-center md:w-[1000px] gap-2 ${clicks > 10 ? "select-none" : " "} `}>
+    <div ref={body} className={`flex flex-wrap justify-center md:w-[1000px] gap-2 ${clicks > 10 ? "select-none" : " "} `} >
       {isLoading ? (
         <div className="w-full h-10 bg-blue animate-pulse rounded-md"></div>
       ) : (
@@ -212,12 +277,13 @@ export function UseCaseList(): JSX.Element {
             useCaseText={useCase.useCaseText}
             isSelected={!!selectedUseCases[useCase.useCaseText]}
             onSelectionChange={(isSelected) => handleSelectionChange(useCase.useCaseText, isSelected)}
-            isDisabled={state.selections >= 3 && !selectedUseCases[useCase.useCaseText]}
+            isDisabled={(state.clicks >= 10 && !selectedUseCases[useCase.useCaseText]) || (Object.keys(selectedUseCases).length >= 3 && !selectedUseCases[useCase.useCaseText])}
           />
         ))
       )}
-      <InputChip onSubmit={() => { }} />
+      <InputChip uscaseListRef={body} onSubmit={handleUsecaseSubmit} />
     </div>
   );
+
 }
 
