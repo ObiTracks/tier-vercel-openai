@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useReducer, useRef } from "react";
 import * as airtable from "@/lib/airtable";
+import { UseCase } from "@/lib/airtable";
 import ConfettiGenerator from "confetti-js";
 import _ from 'lodash';
 
@@ -22,10 +23,11 @@ export function EmailNotify() {
 
     try {
       await airtable.addEmailToAirtable(email);
+      localStorage.setItem('userEmail', email); // This line stores the email in local storage.
       setIsValidEmail(true);
       setShowSuccess(true);
     } catch (error) {
-      console.error('There was a problem with the Airtable operation:', error);
+      console.error('There was a problem saving your email');
     }
   }
 
@@ -57,13 +59,13 @@ export function EmailNotify() {
 
   return (
     <div className={`flex flex-col items-center gap-[10px]`}>
-      <h4 className="font-light m-0">Get notified when we launch 🚀</h4>
+      <h4 className="font-light m-0 text-sm">Get notified when we <span className="blue-gradient-text font-semibold">launch</span> 🚀</h4>
       <form onSubmit={handleSubmit} className={`flex overflow-hidden justify-between items-center select-none border ${isValidEmail ? 'border-blue-500' : 'border-red-500'} focus:border-white transition-all ease-in-out duration-300 rounded-md pr-[6px] min-w-[300px] h-12`}>
         <input
           type="email"
-          placeholder="Leave us your email"
+          placeholder="Get early access"
           onChange={handleEmailChange}
-          className="p-2 text-sm text-grey-800 font-light flex-grow bg-transparent border-none focus:border-none focus:ring-0 outline-none appearance-none focus:outline-none relative"
+          className=" px-5 text-sm text-grey-800 font-light flex-grow bg-transparent border-none focus:border-none focus:ring-0 outline-none appearance-none focus:outline-none relative"
         />
         <button type="submit" className="transition-all ease-in-out duration-300 hover:bg-blue-700 text-md bg-blue-500 text-white px-3 rounded-md h-[80%] leading-none">
           ↵
@@ -168,6 +170,7 @@ export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Elem
   const containerRef = useRef<HTMLDivElement>(null);
 
   const fetchSuggestions = async (value: string) => {
+    value = value.toLowerCase()
     try {
       const fetchedRecords = await airtable.searchRecord(value);
       let fetchedSuggestions = fetchedRecords.map((record: any) => record.get('Usecase'));
@@ -275,12 +278,6 @@ export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Elem
   );
 }
 
-interface UseCase {
-  id: string;
-  useCaseText: string;
-  votes: number;
-}
-
 interface InitialState {
   selectedUseCases: { [key: string]: boolean };
   clicks: number;
@@ -350,6 +347,10 @@ export function UseCaseList(): JSX.Element {
     fetchTopUseCases();
   }, []);
 
+  useEffect(() => {
+    console.log("UseCases: ", useCases)
+  }, [useCases])
+
   const handleSelectionChange = (useCaseText: string, isSelected: boolean) => {
     if (clicks < 10) {
       if (isSelected && state.selections >= 3) return;
@@ -360,39 +361,66 @@ export function UseCaseList(): JSX.Element {
 
   const handleUsecaseSubmit = async (inputValue: string) => {
     const trimmedInputValue = inputValue.trim();
-  
+
     if (!trimmedInputValue) return;
-  
+
     // Attempt to check if the use case already exists in the list
     const existingUsecase = useCases.find(
       (useCase) => useCase.useCaseText.toLowerCase().trim() === trimmedInputValue
     );
-  
+
     try {
       if (existingUsecase) {
         console.log("Usecase found in list: ", existingUsecase);
+        // dispatch({ type: 'ADD_SELECTION', payload: existingUsecase.useCaseText });
+
+        // setUseCases((prevUseCases) => {
+        //   const updatedUseCases = prevUseCases.map(useCase =>
+        //     useCase.id === existingUsecase.id
+        //       ? { ...useCase, votes: useCase.votes + 1 }
+        //       : useCase
+        //   );
+
+        //   localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
+        //   return updatedUseCases;
+        // });
+
+        console.log("Selecting usecase")
         dispatch({ type: 'ADD_SELECTION', payload: existingUsecase.useCaseText });
-  
+        let _ = { ...existingUsecase, votes: existingUsecase.votes + 1 }
+
+        // setUseCases((prevUseCases) => {
+        //   const updatedUseCases = [...prevUseCases, _];
+        //   localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
+        //   return updatedUseCases;
+        // });
+        console.log("Updating usecases state")
         setUseCases((prevUseCases) => {
-          const updatedUseCases = prevUseCases.map(useCase =>
-            useCase.id === existingUsecase.id
-              ? { ...useCase, votes: useCase.votes + 1 }
-              : useCase
-          );
-  
+          // localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
+          const updatedUseCases = prevUseCases.map((useCase) => {
+            if (useCase.useCaseText === existingUsecase.useCaseText) {
+              return {
+                ...useCase,
+                votes: useCase.votes + 1,
+              };
+            }
+            return useCase;
+          });
           localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
-          return updatedUseCases;
+          console.log("Updated usecases state: ", updatedUseCases)
+
+          return updatedUseCases
         });
-  
+
       } else {
-        console.log("Usecase not found in list, searching and creating/upserting: ", existingUsecase);
-  
+        console.log("Usecase not found in list, searching and creating/upserting: ");
+
         const newUsecase: UseCase = await airtable.searchAndCreateUsecase(trimmedInputValue);
-  
+
         if (!newUsecase) throw new Error("Failed to create use case");
-  
+
         dispatch({ type: 'ADD_SELECTION', payload: newUsecase.useCaseText });
-  
+
         setUseCases((prevUseCases) => {
           const updatedUseCases = [...prevUseCases, newUsecase];
           localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
@@ -403,10 +431,13 @@ export function UseCaseList(): JSX.Element {
       console.error('Error processing use case', error);
     }
   };
-  
+
 
   return (
     <div ref={body} className={`flex flex-wrap justify-center md:w-[1000px] gap-2 ${clicks > 10 ? "select-none" : " "} `} >
+      {clicks >= 10 && (
+        <p className={`text-center w-full`}>Whoa whoaaa!! You trying to fry our servers with all these clicks?!</p>
+      )}
       <h1>{JSON.stringify(inputValue)}</h1>
       {isLoading ? (
         <div className="w-full h-10 bg-blue animate-pulse rounded-md"></div>

@@ -184,6 +184,7 @@ export default async function BillingPage() {
                         plan.planId === currentPlan.planId ? "stroke-crimson-9" : "stroke-slate-11"
                       )}
                     />
+                    
                     <p className="body text-slate-11">{feature}</p>
                   </div>
                 ))}

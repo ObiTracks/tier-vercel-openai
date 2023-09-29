@@ -2,66 +2,158 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --Blue-Gradient: linear-gradient(to right, #516EEF, #1AD8FF);
+  --Purple-Gradient: linear-gradient(to right, #AD51EF 60.68%, #6651EF 98.88%);
+
+}
+
+
 @layer components {
   .display {
     @apply font-display text-[80px] font-semibold leading-[88px] tracking-[-2%];
   }
+
   .h1 {
     @apply font-sans text-[56px] font-semibold leading-[64px] tracking-[0%];
   }
+
   .h2 {
     @apply font-sans text-[40px] font-semibold leading-[48px] tracking-[0%];
   }
+
   .h3 {
     @apply font-sans text-[38px] font-semibold leading-[48px] tracking-[-0.75%];
   }
+
   .h4 {
     @apply font-sans text-[32px] font-semibold leading-[40px] tracking-[-0.2%];
   }
+
   .h5 {
     @apply font-sans text-[16px] font-bold uppercase leading-[20px] tracking-[5%];
   }
+
   .h6 {
-    @apply font-sans text-[14px] font-semibold  uppercase leading-[16px] tracking-[5%];
+    @apply font-sans text-[14px] font-semibold uppercase leading-[16px] tracking-[5%];
   }
+
   .body-xl {
     @apply font-sans text-[24px] font-normal leading-[36px] tracking-[0%];
   }
+
   .body-l {
     @apply font-sans text-[20px] font-normal leading-[32px] tracking-[-0.1%];
   }
+
   .body-l-medium {
     @apply font-sans text-[20px] font-medium leading-[32px] tracking-[-0.1%];
   }
+
   .body-l-semibold {
     @apply font-sans text-[20px] font-semibold leading-[32px] tracking-[-0.1%];
   }
+
   .body {
     @apply font-sans text-[16px] font-normal leading-[24px] tracking-[0%];
   }
+
   .body-medium {
     @apply font-sans text-[16px] font-medium leading-[24px] tracking-[0%];
   }
+
   .body-semibold {
     @apply font-sans text-[16px] font-semibold leading-[24px] tracking-[0%];
   }
+
   .caption {
     @apply font-sans text-[14px] font-normal leading-[20px] tracking-[0%];
   }
+
   .caption-medium {
     @apply font-sans text-[14px] font-medium leading-[20px] tracking-[0%];
   }
+
   .caption-semibold {
     @apply font-sans text-[14px] font-semibold leading-[20px] tracking-[0%];
   }
+
   .caption-s {
     @apply font-sans text-[12px] font-normal leading-[16px] tracking-[0%];
   }
+
   .caption-s-medium {
     @apply font-sans text-[12px] font-medium leading-[16px] tracking-[0%];
   }
+
   .caption-s-semibold {
     @apply font-sans text-[12px] font-semibold leading-[16px] tracking-[0%];
   }
+
+  @keyframes pulsate {
+
+    0%,
+    100% {
+      stroke: #516eef20;
+    }
+
+    50% {
+      stroke: #516eef20;
+    }
+  }
+
+  .pulsate {
+    animation: pulsate 10s infinite ease-in-out;
+    /* Increased duration to 10s and added ease-in-out for a smoother transition */
+  }
+
+  @keyframes breathe {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .glow {
+    animation: breathe 8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  }
+
+  @keyframes thoughtfulSpin {
+    0% {
+      transform: rotate(0deg);
+      animation-timing-function: ease-in-out;
+    }
   
+    100% {
+      transform: rotate(360deg);
+      animation-timing-function: ease-in-out;
+    }
+  }
+  
+  .thoughtfulSpin {
+    animation: thoughtfulSpin 15s infinite;
+  }
+  
+
+  .blue-gradient-text {
+    background: var(--Blue-Gradient, linear-gradient(to right, #2D53FF -6.9%, #11D8FF 92.53%));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .purple-gradient-text {
+    background: var(--Purple-Gradient, linear-gradient(to right, #AD51EF 60.68%, #6651EF 98.88%));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+
+
 }

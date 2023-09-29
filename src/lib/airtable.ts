@@ -1,7 +1,14 @@
 import { env } from "@/env.mjs";
 import Airtable from "airtable";
+import { record } from "zod";
 
 var base = new Airtable({ apiKey: env.NEXT_PUBLIC_AIRTABLE_API_KEY }).base('appGTJJ1EDkWFEok5');
+
+export interface UseCase {
+    id: string;
+    useCaseText: string;
+    votes: number;
+  }
 
 export function updateCount(recordString: string, operation: 'increment' | 'decrement'): Promise<number> {
     return new Promise((resolve, reject) => {
@@ -106,6 +113,7 @@ export function searchRecord(recordString: any): Promise<any> {
 }
 
 export async function searchAndCreateUsecase(recordString: string): Promise<UseCase> {
+    recordString = recordString.toLowerCase();
     try {
         const records = await searchRecord(recordString);
 

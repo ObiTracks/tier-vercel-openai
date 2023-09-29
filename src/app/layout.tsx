@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { dm_sans, inter, poppins } from "@/lib/fonts";
 import { Toaster } from "@/components/ui/toaster";
+import {GridBG} from "@/res/bgs/GridBG"
 
 export const metadata: Metadata = {
   title: {
@@ -60,10 +61,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${poppins.variable} ${inter.variable} ${dm_sans.variable}`} suppressHydrationWarning>
       <head />
       {/* Body */}
-      <body className="bg-slate-1 font-sans text-slate-12">
+      <body className="bg-slate-1 font-sans text-slate-12 w-full relative">
+
         {children}
         <Toaster />
+
+      <GridBG/>
+        {/* <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          backgroundImage: `
+      linear-gradient(to right, blue 1px, transparent 1px),
+      linear-gradient(to bottom, blue 1px, transparent 1px)
+    `,
+          backgroundSize: '15px 15px',
+          zIndex: -1
+        }} /> */}
       </body>
+
     </html>
   );
 }

@@ -10,11 +10,11 @@ import clsx from "clsx";
 import { Stargazer } from "@/components/ui/Stargazer";
 import { SignInButton } from "@/components/marketing/LandingSignIn";
 import { SignUpButton } from "@/components/marketing/LandingSignUp";
-import { BlipLogo } from "@/res/logos/BlipLogo";
+import { ProjectXLogo } from "@/res/logos/ProjectXLogo";
 
 const navigation = [
   { name: "Home", href: "/" },
-  { name: "Pricing", href: "/pricing" },
+  // { name: "Pricing", href: "/pricing" },
 ];
 
 export function Header({ stargazers_count }: { stargazers_count: number }) {
@@ -23,20 +23,19 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
   let pathname = usePathname();
 
   return (
-    <header className="border-b border-slate-6 bg-slate-1/5 py-3 backdrop-blur-lg lg:py-0">
+    <header className="border-b border-slate-6 py-3  lg:py-0">
       <nav
         className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8"
         aria-label="Global"
       >
         <div className="flex items-center gap-4 lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5">
-            <span className="sr-only">Blip</span>
-            <div className="flex gap-2">
-              <BlipLogo />
-              <span className="body-semibold">Blip</span>
+            <div className="flex items-center gap-2">
+              <ProjectXLogo />
             </div>
           </Link>
           <Stargazer count={stargazers_count} />
+          <h5>Usecases</h5>
         </div>
         <div className="flex lg:hidden">
           <button
@@ -55,7 +54,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
               href={item.href}
               className={clsx(
                 "body  py-3 text-slate-11",
-                pathname === item.href ? "border-b border-crimson-9" : ""
+                pathname === item.href ? "border-b border-blue" : ""
               )}
             >
               {item.name}
@@ -71,10 +70,8 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
         <Dialog.Panel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-slate-1 p-6 sm:max-w-sm sm:ring-1 sm:ring-slate-6">
           <div className="flex items-center justify-between">
             <Link href="/" className="-m-1.5 p-1.5">
-              <span className="sr-only">Blip</span>
-              <div className="flex gap-2">
-                <BlipLogo />
-                <span className="body-semibold">Blip</span>
+              <div className="flex items-center gap-2">
+                <ProjectXLogo />
               </div>
             </Link>
             <button

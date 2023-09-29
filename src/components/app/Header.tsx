@@ -10,7 +10,7 @@ import { signOut } from "next-auth/react";
 
 import { Button } from "@/components/ui/Button";
 import { Stargazer } from "@/components/ui/Stargazer";
-import { BlipLogo } from "@/res/logos/BlipLogo";
+import { ProjectXLogo } from "@/res/logos/ProjectXLogo";
 
 const navigation = [
   { name: "Generate copy", href: "/generate" },
@@ -36,8 +36,8 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
         <div className="flex items-center  gap-4 lg:flex-1 ">
           <Link href="/generate" className="-m-1.5 p-1.5">
             <span className="sr-only">Blip</span>
-            <div className="flex gap-2">
-              <BlipLogo />
+            <div className="flex items-center gap-2">
+              <ProjectXLogo />
               <span className="body-semibold">Blip</span>
             </div>
           </Link>
@@ -80,7 +80,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
             <Link href="/generate" className="-m-1.5 p-1.5">
               <span className="sr-only">Blip</span>
               <div className="flex gap-2">
-                <BlipLogo />
+                <ProjectXLogo />
                 <span className="body-semibold">Blip</span>
               </div>
             </Link>
