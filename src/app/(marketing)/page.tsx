@@ -25,7 +25,7 @@ export default function IndexPage() {
           />
         </span>
 
-        <p className=" hidden md:block text-lg md:text-xl lg:text-xl xl:body-xl font-regular md:font-semibold text-center px-4 md:px-0">
+        <p className=" hidden md:block text-lg md:text-xl lg:text-xl xl:body-xl font-regular md:font-medium text-center px-4 md:px-0">
           Build products in minutes, not days.
         </p>
 
@@ -44,7 +44,7 @@ export default function IndexPage() {
         </h2>
 
         <p className="hidden sm:block  w-full mt-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-lg font-light text-center text-slate-11 md:w-[600px] md:px-0 leading-snug">
-          Experience <span className="text-white opacity-100 font-semibold">fully automated,</span> iterative, and <span className="blue-gradient-text font-bold"> rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-bold">All with you in the loop.</span>
+          Experience <span className="text-white opacity-100 font-semibold">fully automated,</span> iterative, and <span className="text-white font-bold"> rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-bold">All with you in the loop.</span>
         </p>
 
         <p className="sm:hidden w-full mt-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-lg font-light text-center text-slate-11 md:w-[600px] px-4 leading-relaxed">

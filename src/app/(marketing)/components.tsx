@@ -99,8 +99,8 @@ export function UseCaseChip({ initialValue, useCaseText, isSelected: initialIsSe
       setIsSelected(newSelectionState); // Toggle the selected state
       onSelectionChange(newSelectionState); // Notify parent about the selection change
 
-      const updatedVotes: number = await airtable.updateCount(useCaseText, newSelectionState ? "increment" : "decrement");
-      setVotes(updatedVotes); // Setting the updated vote count.
+      const updatedUsecase: UseCase = await airtable.updateCount(useCaseText, newSelectionState ? "increment" : "decrement");
+      setVotes(updatedUsecase.votes); // Setting the updated vote count.
     } catch (error) {
       console.error('There was an error sending the vote!', error);
     }
@@ -311,6 +311,8 @@ function reducer(state: InitialState, action: { type: string; payload: any; call
       return { ...state, selectedUseCases: remaining, clicks: state.clicks + 1, selections: state.selections - 1 };
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
+    case 'SET_COUNT':
+      return { ...state, isLoading: action.payload };
     default:
       return state;
   }
@@ -321,6 +323,8 @@ export function UseCaseList(): JSX.Element {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { selectedUseCases, clicks, selections, isLoading } = state;
   const [inputValue, setInputValue] = useState<string>('');
+  const [countdown, setCountdown] = useState(10);
+
   const body = useRef<any>(null);
 
   useEffect(() => {
@@ -351,6 +355,26 @@ export function UseCaseList(): JSX.Element {
     console.log("UseCases: ", useCases)
   }, [useCases])
 
+  useEffect(() => {
+    if (clicks >= 10) {
+      const countdownRef = useRef(countdown); // Set up ref
+
+      const intervalId = setInterval(() => {
+        if (countdownRef.current > 0) setCountdown(prev => {
+          countdownRef.current = prev - 1; // Update ref value on each iteration
+          return countdownRef.current;
+        });
+
+        if (countdownRef.current === 0) {
+          clearInterval(intervalId);
+          dispatch({ type: 'SET_COUNT', payload: 0 });
+        }
+      }, 1000);
+      return () => clearInterval(intervalId); // Clean up interval on component unmount
+    }
+  }, [clicks]);
+
+
   const handleSelectionChange = (useCaseText: string, isSelected: boolean) => {
     if (clicks < 10) {
       if (isSelected && state.selections >= 3) return;
@@ -365,29 +389,34 @@ export function UseCaseList(): JSX.Element {
     if (!trimmedInputValue) return;
 
     // Attempt to check if the use case already exists in the list
-    const existingUsecase = useCases.find(
-      (useCase) => useCase.useCaseText.toLowerCase().trim() === trimmedInputValue
-    );
+    const existingUsecase: UseCase = await airtable.searchRecord(
+      trimmedInputValue
+    ).then(records => {
+      return {
+        id: records[0].getId(),
+        useCaseText: records[0].get('Usecase'),
+        votes: records[0].get('Votes'),
+      }
+    }); // returns an array of 0 or more records
 
     try {
       if (existingUsecase) {
-        console.log("Usecase found in list: ", existingUsecase);
-        // dispatch({ type: 'ADD_SELECTION', payload: existingUsecase.useCaseText });
+        console.log("Existing usecase found in airtable ", existingUsecase);
 
-        // setUseCases((prevUseCases) => {
-        //   const updatedUseCases = prevUseCases.map(useCase =>
-        //     useCase.id === existingUsecase.id
-        //       ? { ...useCase, votes: useCase.votes + 1 }
-        //       : useCase
-        //   );
+        // Parse the selected use cases from local storage or default to an empty object
+        const selectedUseCases = JSON.parse(localStorage.getItem('selectedUseCases') || '{}');
 
-        //   localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
-        //   return updatedUseCases;
-        // });
+        // Check if the updatedUsecase.useCaseText exists in the selectedUseCases object
+        if (selectedUseCases[existingUsecase.useCaseText]) {
+          alert("You have already selected this usecase");
+          return;
+        }
 
-        console.log("Selecting usecase")
-        dispatch({ type: 'ADD_SELECTION', payload: existingUsecase.useCaseText });
-        let _ = { ...existingUsecase, votes: existingUsecase.votes + 1 }
+        const updatedUsecase: UseCase = await airtable.updateCount(trimmedInputValue, "increment");
+        console.log(updatedUsecase.votes)
+
+        dispatch({ type: 'ADD_SELECTION', payload: updatedUsecase.useCaseText });
+
 
         // setUseCases((prevUseCases) => {
         //   const updatedUseCases = [...prevUseCases, _];
@@ -395,22 +424,17 @@ export function UseCaseList(): JSX.Element {
         //   return updatedUseCases;
         // });
         console.log("Updating usecases state")
-        setUseCases((prevUseCases) => {
-          // localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
-          const updatedUseCases = prevUseCases.map((useCase) => {
-            if (useCase.useCaseText === existingUsecase.useCaseText) {
-              return {
-                ...useCase,
-                votes: useCase.votes + 1,
-              };
-            }
-            return useCase;
-          });
-          localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
-          console.log("Updated usecases state: ", updatedUseCases)
-
-          return updatedUseCases
+        console.log(updatedUsecase)
+        const updatedUscasesList = useCases.map(item => {
+          return item.useCaseText === updatedUsecase.useCaseText ? updatedUsecase : item;
         });
+
+        localStorage.setItem('useCases', JSON.stringify(updatedUscasesList));
+
+
+
+        setUseCases(updatedUscasesList);
+        console.log("Hello")
 
       } else {
         console.log("Usecase not found in list, searching and creating/upserting: ");
@@ -421,7 +445,7 @@ export function UseCaseList(): JSX.Element {
 
         dispatch({ type: 'ADD_SELECTION', payload: newUsecase.useCaseText });
 
-        setUseCases((prevUseCases) => {
+        setUseCases((prevUseCases: UseCase[]) => {
           const updatedUseCases = [...prevUseCases, newUsecase];
           localStorage.setItem('useCases', JSON.stringify(updatedUseCases));
           return updatedUseCases;
@@ -435,16 +459,15 @@ export function UseCaseList(): JSX.Element {
 
   return (
     <div ref={body} className={`flex flex-wrap justify-center md:w-[1000px] gap-2 ${clicks > 10 ? "select-none" : " "} `} >
-      {clicks >= 10 && (
-        <p className={`text-center w-full`}>Whoa whoaaa!! You trying to fry our servers with all these clicks?!</p>
-      )}
-      <h1>{JSON.stringify(inputValue)}</h1>
+      {/* {clicks >= 10 && ( */}
+      <p className={`text-center text-sm text-blue w-full`}>Whoa whoa!! You trying to fry our servers with all these clicks?! Slow down for </p>
+      {/* )} */}
       {isLoading ? (
         <div className="w-full h-10 bg-blue animate-pulse rounded-md"></div>
       ) : (
         useCases.map(useCase => (
           <UseCaseChip
-            key={useCase.id}
+            key={useCase.id + useCase.votes}
             initialValue={useCase.votes}
             useCaseText={useCase.useCaseText.charAt(0).toUpperCase() + useCase.useCaseText.slice(1)}
             isSelected={!!selectedUseCases[useCase.useCaseText]}

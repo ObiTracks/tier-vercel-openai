@@ -4,25 +4,24 @@ import { record } from "zod";
 
 var base = new Airtable({ apiKey: env.NEXT_PUBLIC_AIRTABLE_API_KEY }).base('appGTJJ1EDkWFEok5');
 
+
+// *********************************************
+// Usecase Voting
+// *********************************************
 export interface UseCase {
     id: string;
     useCaseText: string;
     votes: number;
-  }
+}
 
-export function updateCount(recordString: string, operation: 'increment' | 'decrement'): Promise<number> {
+export function updateCount(recordString: string, operation: 'increment' | 'decrement'): Promise<UseCase> {
     return new Promise((resolve, reject) => {
         base('Popular Usecases').select({
             filterByFormula: `{Usecase} = '${recordString.toLowerCase()}'`,
         }).firstPage((err: any, records: any) => {
             if (err) {
-                if (err.statusCode === 429) {
-                    console.error("Too many requests. Please wait 30 seconds before trying again.");
-                    reject("Too many requests. Please wait 30 seconds before trying again.");
-                } else {
-                    console.error(err);
-                    reject(err);
-                }
+                console.error(err);
+                reject(err);
                 return;
             }
 
@@ -55,7 +54,14 @@ export function updateCount(recordString: string, operation: 'increment' | 'decr
                     return;
                 }
                 console.log(`${operation === 'increment' ? 'Incremented' : 'Decremented'} Votes for ${recordString} to ${votes}`);
-                resolve(votes); // Resolving with the updated vote count.
+                
+                const updatedUseCase: UseCase = {
+                    id: record.id,
+                    useCaseText: record.get('Usecase') || '',
+                    votes: votes,
+                };
+
+                resolve(updatedUseCase); // Resolving with the updated UseCase object.
             });
         });
     });
@@ -88,7 +94,7 @@ export async function createRecord(recordString: string, initialVotes: number = 
 
 
 
-export function searchRecord(recordString: any): Promise<any> {
+export function searchRecord(recordString: any): Promise<any[]> {
     return new Promise((resolve, reject) => {
         base('Popular Usecases').select({
             filterByFormula: `FIND('${recordString}', LOWER({Usecase}))`,
@@ -112,6 +118,7 @@ export function searchRecord(recordString: any): Promise<any> {
     });
 }
 
+// Non-Atomic Utility
 export async function searchAndCreateUsecase(recordString: string): Promise<UseCase> {
     recordString = recordString.toLowerCase();
     try {
@@ -130,8 +137,8 @@ export async function searchAndCreateUsecase(recordString: string): Promise<UseC
                 
                 return {
                     id: record.getId(),
-                    useCaseText: existingUsecaseText,
-                    votes: (record.get('Votes') || 0) + 1, // Return the incremented vote count
+                    useCaseText: record.get('Usecase'),
+                    votes: record.get('Votes'), // Return the incremented vote count
                 };
             }
         }
@@ -163,6 +170,10 @@ export function getTopPopularUsecases(n: number): Promise<any[]> {
         });
     });
 }
+
+// *********************************************
+// Email Collection
+// *********************************************
 
 export async function addEmailToAirtable(email: string): Promise<void> {
     try {
