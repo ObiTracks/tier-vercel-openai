@@ -20,11 +20,11 @@ export default function IndexPage() {
       </header> */}
       <div className="sm:px-4 md:px-8 mt-10 md:mt-20 xl:mt-24 flex flex-col items-center gap-6 md:gap-12 px-5 sm:px-0">
         <div className="px-3 py-1 flex flex-row w-fit gap-2 items-center justify-center border border-gray-600 rounded-full">
-        <ProjectXIconOutline
-              className={clsx(
-                "h-5 w-5 p-0 m-0",
-              )}
-            />
+          <ProjectXIconOutline
+            className={clsx(
+              "h-5 w-5 p-0 m-0",
+            )}
+          />
           {/* <span className="hidden md:block flex justify-center">
             
           </span> */}

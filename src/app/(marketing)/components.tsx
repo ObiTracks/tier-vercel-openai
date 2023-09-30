@@ -330,13 +330,16 @@ interface InitialState {
   isLoading: boolean;
 }
 
-const selectedUseCases = JSON.parse(localStorage.getItem('selectedUseCases') || '{}');
+let selectedUseCases: any = undefined;
+if (typeof window !== 'undefined') {
+  selectedUseCases = JSON.parse(localStorage.getItem('selectedUseCases') || '{}');
+}
 
 // Correcting the Error here, using selectedUseCases directly
 const initialState: InitialState = {
   selectedUseCases,
   clicks: 0,
-  selections: Object.keys(selectedUseCases).filter(key => selectedUseCases[key]).length,
+  selections: selectedUseCases && Object.keys(selectedUseCases).filter(key => selectedUseCases[key]).length,
   isLoading: true,
 };
 
@@ -364,7 +367,7 @@ function reducer(state: InitialState, action: { type: string; payload: any; call
 }
 
 export function UseCaseList(): JSX.Element {
-  const [useCases, setUseCases] = useState<UseCase[]>(JSON.parse(localStorage.getItem('useCases') || '[]'));
+  const [useCases, setUseCases] = useState<UseCase[]>(typeof window !== 'undefined' && JSON.parse(localStorage.getItem('useCases') || '[]'));
   const [state, dispatch] = useReducer(reducer, initialState);
   const { selectedUseCases, clicks, selections, isLoading } = state;
   const [inputValue, setInputValue] = useState<string>('');
@@ -471,7 +474,9 @@ export function UseCaseList(): JSX.Element {
           return item.useCaseText === updatedUsecase.useCaseText ? updatedUsecase : item;
         });
 
-        localStorage.setItem('useCases', JSON.stringify(updatedUscasesList));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('useCases', JSON.stringify(updatedUscasesList));
+        }
 
 
 
