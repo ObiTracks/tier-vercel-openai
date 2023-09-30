@@ -4,6 +4,9 @@ const { fontFamily } = require("tailwindcss/defaultTheme");
 module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
+    letterSpacing: {
+      tighter: '-.08em'
+    },
     fontSize: {
       "2xs": ["0.75rem", { lineHeight: "1.25rem" }],
       xs: ["0.8125rem", { lineHeight: "1.5rem" }],
@@ -22,7 +25,8 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", ...fontFamily.sans],
+        sans: ["var(--font-poppins)", ...fontFamily.sans],
+        inter: ["var(--font-inter)", ...fontFamily.sans],
         display: ["var(--font-dm-sans)", ...fontFamily.sans],
       },
       colors: {
@@ -53,6 +57,38 @@ module.exports = {
           10: "hsl(339, 84.1%, 62.6%)",
           11: "hsl(341, 90.0%, 67.3%)",
           12: "hsl(332, 87.0%, 96.0%)",
+        },
+        blue: {
+          DEFAULT: 'hsla(229, 83%, 63%, 1)',
+          1: 'hsla(229, 93%, 53%, 1)',
+          2: 'hsla(229, 83%, 63%, 1)',
+          3: 'hsla(229, 73%, 73%, 1)',
+          4: 'hsla(229, 63%, 83%, 1)',
+          5: 'hsla(229, 53%, 93%, 1)',
+        },
+        purple: {
+          DEFAULT: 'hsla(275, 83%, 63%, 1)',
+          1: 'hsla(275, 93%, 53%, 1)',
+          2: 'hsla(275, 83%, 63%, 1)',
+          3: 'hsla(275, 73%, 73%, 1)',
+          4: 'hsla(275, 63%, 83%, 1)',
+          5: 'hsla(275, 53%, 93%, 1)',
+        },
+        green: {
+          DEFAULT: 'hsla(126, 71%, 64%, 1)',
+          1: 'hsla(126, 81%, 54%, 1)',
+          2: 'hsla(126, 71%, 64%, 1)',
+          3: 'hsla(126, 61%, 74%, 1)',
+          4: 'hsla(126, 51%, 84%, 1)',
+          5: 'hsla(126, 41%, 94%, 1)',
+        },
+        teal: {
+          DEFAULT: 'hsla(187, 83%, 63%, 1)',
+          1: 'hsla(187, 93%, 53%, 1)',
+          2: 'hsla(187, 83%, 63%, 1)',
+          3: 'hsla(187, 73%, 73%, 1)',
+          4: 'hsla(187, 63%, 83%, 1)',
+          5: 'hsla(187, 53%, 93%, 1)',
         },
       },
     },

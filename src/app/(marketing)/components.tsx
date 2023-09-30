@@ -401,15 +401,14 @@ export function UseCaseList(): JSX.Element {
 
   useEffect(() => {
     if (clicks >= 10) {
-      const countdownRef = useRef(countdown); // Set up ref
 
       const intervalId = setInterval(() => {
-        if (countdownRef.current > 0) setCountdown(prev => {
-          countdownRef.current = prev - 1; // Update ref value on each iteration
-          return countdownRef.current;
+        if (countdown > 0) setCountdown(prev => {
+          setCountdown(prev => prev - 1); // Update state value on each iteration
+          return countdown;
         });
 
-        if (countdownRef.current === 0) {
+        if (countdown === 0) {
           clearInterval(intervalId);
           dispatch({ type: 'SET_COUNT', payload: 0 });
         }
