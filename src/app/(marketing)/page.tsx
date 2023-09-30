@@ -3,7 +3,9 @@ import { clsx } from "clsx";
 import { BgPattern } from "@/components/ui/Bgpattern";
 import { EmailNotify, UseCaseChip, UseCaseList } from "./components"; // import the client component
 import { ProjectXIcon } from "@/res/icons/ProjectXIcon";
-import { ProjectXLogo } from "@/res/logos/ProjectXLogo"
+import { ProjectXIconOutline } from "@/res/icons/ProjectXIconOutline";
+import { MatrixIcon } from "@/res/icons/MatrixIcon";
+import { ProjectXLogo } from "@/res/logos/ProjectXLogo";
 
 
 
@@ -16,18 +18,24 @@ export default function IndexPage() {
       {/* <header className="py-4 bg-gray-900 text-white text-center leading-snug">
 
       </header> */}
-      <div className="sm:px-4 md:px-8 mt-10 md:mt-24 flex flex-col items-center gap-6 px-5 sm:px-0">
-        <span className="hidden md:block flex justify-center">
-          <ProjectXIcon
-            className={clsx(
-              "h-10 w-10 mb-4",
-            )}
-          />
-        </span>
+      <div className="sm:px-4 md:px-8 mt-10 md:mt-20 xl:mt-24 flex flex-col items-center gap-6 md:gap-12 px-5 sm:px-0">
+        <div className="px-3 py-1 flex flex-row w-fit gap-2 items-center justify-center border border-gray-600 rounded-full">
+        <ProjectXIconOutline
+              className={clsx(
+                "h-5 w-5 p-0 m-0",
+              )}
+            />
+          {/* <span className="hidden md:block flex justify-center">
+            
+          </span> */}
+          <p className="hidden md:block  tracking-[2px] uppercase flex gap-2 text-sm font-semibold text-center px-4 md:px-0 text-slate-12">
+            Build products in minutes, not days.
+          </p>
+          {/* <p className=" hidden md:block text-lg md:text-xl lg:text-xl font-bold md:font-semibold text-center px-4 md:px-0 text-slate-12">
+            Build products in minutes, not days.
+          </p> */}
+        </div>
 
-        <p className=" hidden md:block text-lg md:text-xl lg:text-xl xl:body-xl font-regular md:font-medium text-center px-4 md:px-0">
-          Build products in minutes, not days.
-        </p>
 
 
         <span className="md:hidden flex justify-center">
@@ -44,33 +52,36 @@ export default function IndexPage() {
         </h2>
 
         <p className="hidden sm:block  w-full mt-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-lg font-light text-center text-slate-11 md:w-[600px] md:px-0 leading-snug">
-          Experience <span className="text-white opacity-100 font-semibold">fully automated,</span> iterative, and <span className="text-white font-bold"> rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-bold">All with you in the loop.</span>
+          Experience <span className="text-slate-12 opacity-100 font-medium">fully automated,</span> iterative, and <span className="text-slate-12 font-medium"> rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-medium">All with you in the loop.</span>
         </p>
 
-        <p className="sm:hidden w-full mt-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-lg font-light text-center text-slate-11 md:w-[600px] px-4 leading-relaxed">
-          Build products in minutes, not days. Experience <span className="text-white opacity-90 font-semibold"> fully automated,</span> iterative, and <span className="text-white font-semibold">rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-semibold"> All with you in the loop.</span>
+        <p className="sm:hidden w-full mt-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-lg font-semibold text-center text-slate-11 md:w-[600px] px-4 leading-relaxed">
+          Build products in minutes, not days. Experience <span className="text-slate-12 opacity-90 font-medium"> fully automated,</span> iterative, and <span className="text-white font-medium">rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-medium"> All with you in the loop.</span>
         </p>
 
       </div>
 
-      <section className="flex-col items-center py-16 md:py-20">
+      <section className="flex-col items-center py-12 2xl:my-10">
         <EmailNotify />
       </section>
 
-      <section className="flex-col items-center md:mt-8">
+      <section className="flex flex-col items-center md:my-32">
         <h3 className="text-center px-4 md:px-0 text-lg md:text-xl tracking-tight">How do you see yourself using agents to build?</h3>
-        <div className="mt-4 flex gap-4 justify-center items-center">
+        <div className="md:px-[10%] mt-4 flex gap-4 justify-center items-center">
           {/* <UseCaseChip initialValue={0} useCaseText="Lorem ipsum dolor sit amet" /> */}
           <UseCaseList />
           {/* Use multiple <UseCaseChip /> components for other chips */}
         </div>
       </section>
-      <div className="mb-40 mt-20 flex flex-col items-center gap-4">
-        <p className="body">Get your <span className="font-semibold">free account today</span></p>
+      <div className="my-52 flex flex-col items-center gap-4">
+
+        <span className="flex flex-row gap-3 items-center justify-center text-lg font-light text-gray-500">Never send a human to do a machine's job... <MatrixIcon />
+        </span>
+        {/* <p className="body">Get your <span className="font-semibold">free account today</span></p> */}
         {/* <div className="flex flex-col items-center gap-2 md:flex-row md:gap-4">
           <button className="block bg-blue-500 text-white px-4 py-2 rounded-md">Sign Up</button>
         </div> */}
-        <p className="caption text-slate-11">No credit card required</p>
+        {/* <p className="caption text-slate-11">No credit card required</p> */}
       </div>
     </>
   );

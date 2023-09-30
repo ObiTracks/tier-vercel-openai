@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dialog } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import * as airtable from "@/lib/airtable";
+
 
 import { Stargazer } from "@/components/ui/Stargazer";
 import { SignInButton } from "@/components/marketing/LandingSignIn";
 import { SignUpButton } from "@/components/marketing/LandingSignUp";
+import { TallyCount } from "@/app/(marketing)/components";
 import { ProjectXLogo } from "@/res/logos/ProjectXLogo";
+
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -19,6 +23,22 @@ const navigation = [
 
 export function Header({ stargazers_count }: { stargazers_count: number }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [totalVotes, setTotalVotes] = useState(0);
+
+  useEffect(() => {
+    const getTotalVotes = async () => {
+      try {
+
+    let votes = await airtable.cumulativeVotesTotal()
+        setTotalVotes(await airtable.cumulativeVotesTotal());
+        console.log("Votes: ", votes)
+      } catch (error) {
+        console.error('Error getting total votes:', error);
+      }
+    };
+    let votes = getTotalVotes();
+  }, []);
+
 
   let pathname = usePathname();
 
@@ -34,8 +54,8 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
               <ProjectXLogo />
             </div>
           </Link>
-          <Stargazer count={stargazers_count} />
-          <h5>Usecases</h5>
+          {/* <Stargazer count={stargazers_count} /> */}
+          <TallyCount count={totalVotes}/>
         </div>
         <div className="flex lg:hidden">
           <button
@@ -62,7 +82,7 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
           ))}
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-5">
-          <SignInButton className="block" />
+          {/* <SignInButton className="block" /> */}
         </div>
       </nav>
       <Dialog as="div" className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
@@ -96,10 +116,10 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
                   </Link>
                 ))}
               </div>
-              <div className="flex flex-col gap-3 py-6">
+              {/* <div className="flex flex-col gap-3 py-6">
                 <SignInButton className="w-full" />
                 <SignUpButton className="w-full" />
-              </div>
+              </div> */}
             </div>
           </div>
         </Dialog.Panel>
@@ -107,3 +127,4 @@ export function Header({ stargazers_count }: { stargazers_count: number }) {
     </header>
   );
 }
+

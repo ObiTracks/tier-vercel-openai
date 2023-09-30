@@ -14,7 +14,7 @@ export interface UseCase {
     votes: number;
 }
 
-export function updateCount(recordString: string, operation: 'increment' | 'decrement'): Promise<UseCase> {
+export function updateCount(recordString: string, operation: 'increment' | 'decrement', email?: string): Promise<UseCase> {
     return new Promise((resolve, reject) => {
         base('Popular Usecases').select({
             filterByFormula: `{Usecase} = '${recordString.toLowerCase()}'`,
@@ -68,7 +68,7 @@ export function updateCount(recordString: string, operation: 'increment' | 'decr
 }
 
 
-export async function createRecord(recordString: string, initialVotes: number = 1): Promise<UseCase> {
+export async function createRecord(recordString: string, initialVotes: number = 1, email?: string): Promise<UseCase> {
     try {
         const records = await base('Popular Usecases').create([{
             fields: {
@@ -77,7 +77,7 @@ export async function createRecord(recordString: string, initialVotes: number = 
             },
         }]);
 
-        const createdRecord = records[0];
+        const createdRecord: any = records[0];
         const useCase: UseCase = {
             id: createdRecord.getId(),
             useCaseText: createdRecord.get('Usecase'),
@@ -114,6 +114,25 @@ export function searchRecord(recordString: any): Promise<any[]> {
             }
 
             resolve(foundRecords);
+        });
+    });
+}
+
+export function cumulativeVotesTotal(): Promise<number> {
+    return new Promise((resolve, reject) => {
+        let totalVotes = 0;
+        base('Popular Usecases').select({}).eachPage(function (records, fetchNextPage) {
+            records.forEach(function (record) {
+                totalVotes += Number(record.get('Votes')) || 0; 
+            });
+            fetchNextPage();
+        }, function done(err) {
+            if (err) {
+                console.error(err);
+                reject(err);
+                return;
+            }
+            resolve(totalVotes);
         });
     });
 }

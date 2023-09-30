@@ -33,7 +33,7 @@ export function GridBG({
         <path
           d={`M ${cellSize} 0 V ${cellSize} M 0 ${cellSize} H ${cellSize}`}
           fill="none"
-          className="pulsate"
+          className="bggrid"
           strokeWidth="1"
         />
       </pattern>

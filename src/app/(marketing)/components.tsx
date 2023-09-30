@@ -5,16 +5,39 @@ import * as airtable from "@/lib/airtable";
 import { UseCase } from "@/lib/airtable";
 import ConfettiGenerator from "confetti-js";
 import _ from 'lodash';
+import { clsx } from "clsx";
+import { ProjectXIconOutline } from "@/res/icons/ProjectXIconOutline";
+
 
 
 export function EmailNotify() {
   const [email, setEmail] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [isValidEmail, setIsValidEmail] = useState(true); // to track if email is valid
-  const canvasRef = useRef(null);
+  const [isFocused, setIsFocused] = useState(false); // New State Variable
 
   const handleSubmit = async (e: any) => {
+    e.persist();
     e.preventDefault(); // prevent the default form submission
+
+    const storedEmail = localStorage.getItem('userEmail');
+
+    if (storedEmail === email) {
+      console.log("We already got your email!")
+      return;
+    }
+
+    // Send POST request to API route
+    const res = await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email }),
+    }).then((res) => res.json()).then((data) => {
+      console.log("Email sent successfully: ", email, data)
+    }).catch((err) => {
+      console.log("Error sending email")
+    });
+
 
     if (!validateEmail(email)) { // Validate email when form is submitted
       setIsValidEmail(false); // Set the isValidEmail to false if email is invalid
@@ -26,53 +49,57 @@ export function EmailNotify() {
       localStorage.setItem('userEmail', email); // This line stores the email in local storage.
       setIsValidEmail(true);
       setShowSuccess(true);
+      return false
     } catch (error) {
       console.error('There was a problem saving your email');
     }
   }
 
   const validateEmail = (email: string) => {
-    // A simple regex for email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
 
   const handleEmailChange = (e: any) => {
     setEmail(e.target.value);
-    // setIsValidEmail(validateEmail(e.target.value));
   }
 
   useEffect(() => {
     if (showSuccess) {
-      const confettiSettings = { target: canvasRef.current };
-      const confetti = new ConfettiGenerator(confettiSettings);
-      confetti.render();
       const timeoutId = setTimeout(() => {
-        confetti.clear();
+        setShowSuccess(false);
       }, 5000);
-      return () => {
-        confetti.clear();
-        clearTimeout(timeoutId);
-      };
+      return () => clearTimeout(timeoutId);
     }
   }, [showSuccess]);
 
   return (
-    <div className={`flex flex-col items-center gap-[10px]`}>
-      <h4 className="font-light m-0 text-sm">Get notified when we <span className="blue-gradient-text font-semibold">launch</span> 🚀</h4>
-      <form onSubmit={handleSubmit} className={`flex overflow-hidden justify-between items-center select-none border ${isValidEmail ? 'border-blue-500' : 'border-red-500'} focus:border-white transition-all ease-in-out duration-300 rounded-md pr-[6px] min-w-[300px] h-12`}>
-        <input
-          type="email"
-          placeholder="Get early access"
-          onChange={handleEmailChange}
-          className=" px-5 text-sm text-grey-800 font-light flex-grow bg-transparent border-none focus:border-none focus:ring-0 outline-none appearance-none focus:outline-none relative"
-        />
-        <button type="submit" className="transition-all ease-in-out duration-300 hover:bg-blue-700 text-md bg-blue-500 text-white px-3 rounded-md h-[80%] leading-none">
-          ↵
-        </button>
-      </form>
+    <div className={`relative flex flex-col items-center gap-[10px]`}>
+      <h4 className="font-light m-0 text-md sm:text-md">Get notified when we <span className="blue-gradient-text font-semibold">launch</span> 🚀</h4>
+
+      <div className="relative">
+        <form
+          onSubmit={handleSubmit}
+          className={`flex overflow-hidden justify-between items-center select-none 
+                     border ${isFocused ? 'border-blue-500' : (isValidEmail ? 'border-gray-500' : 'border-red-500')} 
+                     ${showSuccess && 'border-green'} 
+                     transition-all ease-in-out duration-300 rounded-md pr-[6px] min-w-[300px] h-12`}
+        >
+          <input
+            type="email"
+            placeholder="Get early access"
+            onChange={handleEmailChange}
+            onFocus={() => setIsFocused(true)} // set isFocused to true when input is focused
+            onBlur={() => setIsFocused(false)} // set isFocused to false when input loses focus
+            className=" focus:text-white px-5 text-sm text-grey-800 font-light flex-grow bg-transparent border-none focus:border-none focus:ring-0 outline-none appearance-none focus:outline-none relative"
+          />
+          <button type="submit" className="transition-all ease-in-out duration-300 text-md bg-blue text-white px-3 rounded-md h-[80%] leading-none">
+            ↵
+          </button>
+        </form>
+      </div>
+
       {showSuccess && <p className="text-green-500 mt-2">Thanks! We got your email 🎉</p>}
-      <canvas ref={canvasRef} className={`fixed top-0 left-0 z-10 w-full h-full ${showSuccess ? 'visible' : 'invisible'}`} />
     </div>
   );
 }
@@ -117,6 +144,24 @@ export function UseCaseChip({ initialValue, useCaseText, isSelected: initialIsSe
       <div className="text-xs text-grey-800 font-light px-2 py-1">{useCaseText}</div>
     </div>
   );
+}
+
+
+export function TallyCount({ count }: { count?: number }) {
+  return (
+    <div className={`overflow-hidden flex flex-row  border border-slate-7 rounded-md`}>
+      <div className={`bg-slate-3 flex flex-row w-fit items-center gap-1 px-2 py-0 cursor-pointer border-r-[1px] border-slate-7`}>
+        <ProjectXIconOutline className={clsx(
+          "h-4 w-4 p-0 m-0",
+        )}
+        />
+        <span className="font-regular text-xs">Usecases ▲▼</span>
+
+      </div>
+      <span className={`px-2 flex items-center text-2xs text-center `}>{count! > 0 ? count : "◉"}</span>
+      {/* <div className="text-xs text-grey-800 font-light px-2 py-1">{useCaseText}</div> */}
+    </div>
+  )
 }
 
 interface InputChipProps {
@@ -247,7 +292,7 @@ export function InputChip({ uscaseListRef, onSubmit }: InputChipProps): JSX.Elem
         ref={inputRef}
         type="text"
         maxLength={maxCharLimit}
-        placeholder="How do you see yourself using AI on your codebase?"
+        placeholder="What's your usecase?"
         value={inputValue}
         onChange={handleInputChange}
         onKeyDown={handleKeyPress}
@@ -352,10 +397,6 @@ export function UseCaseList(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    console.log("UseCases: ", useCases)
-  }, [useCases])
-
-  useEffect(() => {
     if (clicks >= 10) {
       const countdownRef = useRef(countdown); // Set up ref
 
@@ -389,11 +430,13 @@ export function UseCaseList(): JSX.Element {
     if (!trimmedInputValue) return;
 
     // Attempt to check if the use case already exists in the list
-    const existingUsecase: UseCase = await airtable.searchRecord(
+    const existingUsecase: any = await airtable.searchRecord(
       trimmedInputValue
     ).then(records => {
+      console.log(records[0])
+      if (records.length === 0) return null;
       return {
-        id: records[0].getId(),
+        id: records[0].id,
         useCaseText: records[0].get('Usecase'),
         votes: records[0].get('Votes'),
       }
@@ -408,7 +451,6 @@ export function UseCaseList(): JSX.Element {
 
         // Check if the updatedUsecase.useCaseText exists in the selectedUseCases object
         if (selectedUseCases[existingUsecase.useCaseText]) {
-          alert("You have already selected this usecase");
           return;
         }
 
@@ -459,9 +501,9 @@ export function UseCaseList(): JSX.Element {
 
   return (
     <div ref={body} className={`flex flex-wrap justify-center md:w-[1000px] gap-2 ${clicks > 10 ? "select-none" : " "} `} >
-      {/* {clicks >= 10 && ( */}
-      <p className={`text-center text-sm text-blue w-full`}>Whoa whoa!! You trying to fry our servers with all these clicks?! Slow down for </p>
-      {/* )} */}
+      {clicks >= 10 && (
+        <p className={`text-center text-sm text-blue w-full`}>Whoa whoa!! You trying to fry our servers with all these clicks?! Slow down for </p>
+      )}
       {isLoading ? (
         <div className="w-full h-10 bg-blue animate-pulse rounded-md"></div>
       ) : (
