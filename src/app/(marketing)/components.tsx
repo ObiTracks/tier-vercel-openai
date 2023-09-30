@@ -444,7 +444,7 @@ export function UseCaseList(): JSX.Element {
 
     try {
       if (existingUsecase) {
-        console.log("Existing usecase found in airtable ", existingUsecase);
+        // console.log("Existing usecase found ", existingUsecase);
 
         // Parse the selected use cases from local storage or default to an empty object
         const selectedUseCases = JSON.parse(localStorage.getItem('selectedUseCases') || '{}');

@@ -28,7 +28,7 @@ export default function IndexPage() {
           {/* <span className="hidden md:block flex justify-center">
             
           </span> */}
-          <p className="hidden md:block  tracking-[2px] uppercase flex gap-2 text-sm font-semibold text-center px-4 md:px-0 text-slate-12">
+          <p className="hidden sm:block  text-2xs sm:text-sm tracking-[2px] uppercase flex gap-2 font-semibold text-center px-4 md:px-0 text-slate-12">
             Build products in minutes, not days.
           </p>
           {/* <p className=" hidden md:block text-lg md:text-xl lg:text-xl font-bold md:font-semibold text-center px-4 md:px-0 text-slate-12">
@@ -38,7 +38,7 @@ export default function IndexPage() {
 
 
 
-        <span className="md:hidden flex justify-center">
+        <span className="sm:hidden flex justify-center">
           <ProjectXIcon
             className={clsx(
               "h-6 w-6 mb-4",
@@ -55,7 +55,7 @@ export default function IndexPage() {
           Experience <span className="text-slate-12 opacity-100 font-medium">fully automated,</span> iterative, and <span className="text-slate-12 font-medium"> rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-medium">All with you in the loop.</span>
         </p>
 
-        <p className="sm:hidden w-full mt-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-lg font-semibold text-center text-slate-11 md:w-[600px] px-4 leading-relaxed">
+        <p className="sm:hidden w-full mt-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-lg font-light text-center text-slate-11 md:w-[600px] px-6 leading-relaxed">
           Build products in minutes, not days. Experience <span className="text-slate-12 opacity-90 font-medium"> fully automated,</span> iterative, and <span className="text-white font-medium">rapid software development,</span> powered by collaborative AI agents. <span className="text-white font-medium"> All with you in the loop.</span>
         </p>
 
